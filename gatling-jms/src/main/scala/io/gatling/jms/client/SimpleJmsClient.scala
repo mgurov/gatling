@@ -94,7 +94,10 @@ class SimpleJmsClient(
    * Writes a property map to the message properties
    */
   private def writePropsToMessage(props: Map[String, Any], message: Message): Unit =
-    props.foreach { case (key, value) => message.setObjectProperty(key, value) }
+    props.foreach {
+      case ("JMSType", jmsType: String) => message.setJMSType(jmsType)
+      case (key, value)                 => message.setObjectProperty(key, value)
+    }
 
   /**
    * Wrapper to send a BytesMessage, returns the message ID of the sent message

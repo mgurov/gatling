@@ -21,11 +21,11 @@ import io.gatling.jms.{ JmsQueue, JmsTopic, MockMessage }
 
 class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
 
-  def withJmsClient(name: String)(testCode: (SimpleJmsClient, MessageConsumer, String) => Any): Unit = {
+  def withJmsClient(name: String, jmsType: String = "whatever")(testCode: (SimpleJmsClient, MessageConsumer, String, String) => Any): Unit = {
     val client = createClient(JmsQueue(name))
     val consumer = client.createReplyConsumer()
     try {
-      testCode(client, consumer, name)
+      testCode(client, consumer, name, jmsType)
     } finally {
       client.close()
     }
@@ -33,18 +33,19 @@ class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
 
   val propKey = "key"
 
-  "simple client" should "send  and pick up text message" in withJmsClient("text") { (client, consumer, name) =>
+  "simple client" should "send and pick up text message" in withJmsClient("text", "textType") { (client, consumer, name, jmsType) =>
     val payload = "hello message"
-    val properties = Map(propKey -> name)
+    val properties = Map(propKey -> name, "JMSType" -> jmsType)
     val sentMsg = client.sendTextMessage(payload, properties).asInstanceOf[TextMessage]
     val receivedMsg = consumer.receive().asInstanceOf[TextMessage]
 
     receivedMsg shouldBe sentMsg
     receivedMsg.getText shouldBe payload
     receivedMsg.getStringProperty(propKey) shouldBe name
+    receivedMsg.getJMSType shouldBe jmsType
   }
 
-  it should "send and pick up map message" in withJmsClient("map") { (client, consumer, name) =>
+  it should "send and pick up map message" in withJmsClient("map") { (client, consumer, name, jmsType) =>
     val payload = Map("msg" -> "hello message")
     val properties = Map(propKey -> name)
     val sentMsg = client.sendMapMessage(payload, properties).asInstanceOf[MapMessage]
@@ -55,7 +56,7 @@ class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
     receivedMsg.getStringProperty(propKey) shouldBe name
   }
 
-  it should "send and pick up bytes message" in withJmsClient("bytes") { (client, consumer, name) =>
+  it should "send and pick up bytes message" in withJmsClient("bytes") { (client, consumer, name, jmsType) =>
     val payload = Array[Byte](1, 2, 3)
     val properties = Map(propKey -> name)
     val sentMsg = client.sendBytesMessage(payload, properties).asInstanceOf[BytesMessage]
@@ -66,7 +67,8 @@ class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
     receivedMsg.getStringProperty(propKey) shouldBe name
   }
 
-  it should "send and pick up object message" in withJmsClient("object") { (client, consumer, name) =>
+  it should "send and pick up object message" in withJmsClient("object") { (client, consumer, name, jmsType) =>
+
     val payload = JmsTopic(name)
     val properties = Map(propKey -> name)
     val sentMsg = client.sendObjectMessage(payload, properties).asInstanceOf[ObjectMessage]
