@@ -17,7 +17,7 @@ package io.gatling.jms.client
 
 import javax.jms._
 
-import io.gatling.jms.{ JmsQueue, JmsTopic, MockMessage }
+import io.gatling.jms._
 
 class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
 
@@ -35,7 +35,7 @@ class SimpleJmsClientSpec extends BrokerBasedSpecification with MockMessage {
 
   "simple client" should "send and pick up text message" in withJmsClient("text", "textType") { (client, consumer, name, jmsType) =>
     val payload = "hello message"
-    val properties = Map(propKey -> name, "JMSType" -> jmsType)
+    val properties = Map(propKey -> name, JmsConstants.JMSTypeKey -> jmsType)
     val sentMsg = client.sendTextMessage(payload, properties).asInstanceOf[TextMessage]
     val receivedMsg = consumer.receive().asInstanceOf[TextMessage]
 
