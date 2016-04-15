@@ -80,5 +80,7 @@ case class JmsRequestBuilder(attributes: JmsAttributes, factory: JmsAttributes =
    */
   def check(checks: JmsCheck*) = this.modify(_.attributes.checks).using(_ ::: checks.toList)
 
+  def jmsType(jmsType: Option[Expression[String]]) = this.modify(_.attributes.jmsType).using((_) => jmsType)
+
   def build(): ActionBuilder = factory(attributes)
 }

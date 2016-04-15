@@ -99,6 +99,7 @@ class SimpleJmsClient(
    */
   private def writePropsToMessage(props: Map[String, Any], message: Message): Unit =
     props.foreach {
+      //TODO: drop this!
       case ("JMSType", jmsType: String) => message.setJMSType(jmsType)
       case (key, value)                 => message.setObjectProperty(key, value)
     }
