@@ -72,5 +72,23 @@ trait JmsClient {
    */
   def sendTextMessage(messageText: String, props: Map[String, Any]): Message
 
+  def newBytesMessage(bytes: Array[Byte]): Message
+
+  /**
+   * Note that map must match the javax.jms.MapMessage contract ie: "This method works only
+   * for the objectified primitive object types (Integer, Double, Long ...), String objects,
+   * and byte arrays."
+   */
+  def newMapMessage(map: Map[String, Any]): Message
+
+  def newObjectMessage(o: java.io.Serializable): Message
+
+  def newTextMessage(messageText: String): Message
+
+  /**
+   * Note that exceptions are allowed to bubble up to the caller
+   */
+  def sendMessage(message: Message): Message
+
   def close(): Unit
 }

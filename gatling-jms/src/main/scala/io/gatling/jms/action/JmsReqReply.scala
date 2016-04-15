@@ -112,26 +112,32 @@ class JmsReqReplyActor(attributes: JmsAttributes, protocol: JmsProtocol, tracker
    */
   def executeOrFail(session: Session): Validation[Unit] = {
 
-    val messageProperties = resolveProperties(attributes.messageProperties, session)
-
-    // send the message
     val startDate = nowMillis
 
-    val msg = messageProperties.flatMap { props =>
-      attributes.message match {
-        case BytesJmsMessage(bytes) => bytes(session).map(bytes => client.sendBytesMessage(bytes, props))
-        case MapJmsMessage(map)     => map(session).map(map => client.sendMapMessage(map, props))
-        case ObjectJmsMessage(o)    => o(session).map(o => client.sendObjectMessage(o, props))
-        case TextJmsMessage(txt)    => txt(session).map(txt => client.sendTextMessage(txt, props))
-      }
+    val msg = attributes.message match {
+      case BytesJmsMessage(bytes) => bytes(session).map(bytes => client.newBytesMessage(bytes))
+      case MapJmsMessage(map)     => map(session).map(map => client.newMapMessage(map))
+      case ObjectJmsMessage(o)    => o(session).map(o => client.newObjectMessage(o))
+      case TextJmsMessage(txt)    => txt(session).map(txt => client.newTextMessage(txt))
     }
 
-    msg.map { msg =>
-      // notify the tracker that a message was sent
+    msg.map(msg => {
+      resolveProperties(attributes.messageProperties, session).foreach { props =>
+        {
+          props.foreach {
+            case (key, value) => msg.setObjectProperty(key, value)
+          }
+        }
+      }
+
+      attributes.jmsType.map(_(session)).foreach((jmsType) => { msg.setJMSType(jmsType.get.toString) })
+
+      client.sendMessage(msg)
+
       val matchId = messageMatcher.requestMatchId(msg)
       logMessage(s"Message sent JMSMessageID=${msg.getJMSMessageID} matchId=$matchId", msg)
       tracker ! MessageSent(replyDestinationName, matchId, startDate, attributes.checks, session, next, attributes.requestName)
-    }
+    })
   }
 
   def resolveProperties(

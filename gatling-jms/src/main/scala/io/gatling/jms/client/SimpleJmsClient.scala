@@ -146,9 +146,32 @@ class SimpleJmsClient(
     sendMessage(message)
   }
 
+  def newBytesMessage(bytes: Array[Byte]): Message = {
+    val message = session.createBytesMessage
+    message.writeBytes(bytes)
+    message
+  }
+
   /**
-   * Sends a JMS message, returns the message of the sent message
-   * <p>
+   * Note that map must match the javax.jms.MapMessage contract ie: "This method works only
+   * for the objectified primitive object types (Integer, Double, Long ...), String objects,
+   * and byte arrays."
+   */
+  def newMapMessage(map: Map[String, Any]): Message = {
+    val message = session.createMapMessage
+    map.foreach { case (key, value) => message.setObject(key, value) }
+    message
+  }
+
+  def newObjectMessage(o: java.io.Serializable): Message = {
+    session.createObjectMessage(o)
+  }
+
+  def newTextMessage(messageText: String): Message = {
+    session.createTextMessage(messageText)
+  }
+
+  /**
    * Note that exceptions are allowed to bubble up to the caller
    */
   def sendMessage(message: Message): Message = {
