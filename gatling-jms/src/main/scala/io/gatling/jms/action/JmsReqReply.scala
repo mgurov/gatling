@@ -114,15 +114,17 @@ class JmsReqReplyActor(attributes: JmsAttributes, protocol: JmsProtocol, tracker
 
     val messageProperties = resolveProperties(attributes.messageProperties, session)
 
+    val jmsType = attributes.jmsType.map(_(session).get)
+
     // send the message
     val startDate = nowMillis
 
     val msg = messageProperties.flatMap { props =>
       attributes.message match {
-        case BytesJmsMessage(bytes) => bytes(session).map(bytes => client.sendBytesMessage(bytes, props))
-        case MapJmsMessage(map)     => map(session).map(map => client.sendMapMessage(map, props))
-        case ObjectJmsMessage(o)    => o(session).map(o => client.sendObjectMessage(o, props))
-        case TextJmsMessage(txt)    => txt(session).map(txt => client.sendTextMessage(txt, props))
+        case BytesJmsMessage(bytes) => bytes(session).map(bytes => client.sendBytesMessage(bytes, props, jmsType))
+        case MapJmsMessage(map)     => map(session).map(map => client.sendMapMessage(map, props, jmsType))
+        case ObjectJmsMessage(o)    => o(session).map(o => client.sendObjectMessage(o, props, jmsType))
+        case TextJmsMessage(txt)    => txt(session).map(txt => client.sendTextMessage(txt, props, jmsType))
       }
     }
 
